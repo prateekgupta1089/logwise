@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import textwrap
 
 BOX_LEVEL = 5
 logging.addLevelName(BOX_LEVEL, "BOX")
@@ -62,18 +63,15 @@ class CustomLogger:
     def warning(self, msg): self.logger.warning(msg)
     def error(self, msg): self.logger.error(msg)
 
-    def box(self, msg):
-        term_width = shutil.get_terminal_size((80, 20)).columns
-        box_width = max(20, term_width)
-
-        content_width = box_width - 4
-        centered_msg = msg.center(content_width)
-
-        top_border = '╭' + '─' * (box_width - 2) + '╮'
-        bottom_border = '╰' + '─' * (box_width - 2) + '╯'
-        middle = f'│ {centered_msg} │'
-
-        box = f"{top_border}\n{middle}\n{bottom_border}"
-        self.logger.log(BOX_LEVEL, box, stacklevel=2)
+    def box(self, msg: str):
+        term_width = shutil.get_terminal_size(fallback=(80, 20)).columns
+        box_width = max(40, min(term_width - 4, 120))
+        wrapped_lines = textwrap.wrap(msg, width=box_width - 4)
+        top = '╭' + '─' * (box_width - 2) + '╮'
+        bottom = '╰' + '─' * (box_width - 2) + '╯'
+        middle = [f'│ {line.ljust(box_width - 4)} │' for line in wrapped_lines]
+        full_box = '\n'.join([top] + middle + [bottom])
+        full_box = self.bold_white + full_box + self.reset
+        self.logger.log(BOX_LEVEL, full_box, stacklevel=2)
 
     def get_logger(self): return self.logger
